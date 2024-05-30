@@ -25,7 +25,9 @@ def f_recursion(n):
     if n == 1:
         return 2
     else:
-        return (-1)**n * (fact_recursion(n - 1) - g_recursion(n - 1))
+        global p
+        p *= -1
+        return p * (fact_recursion(n - 1) - g_recursion(n - 1))
 
 @lru_cache(maxsize=None)
 def g_recursion(n):
@@ -44,8 +46,10 @@ def fact_iteration(n):
 @lru_cache(maxsize=None)
 def f_g_iteration(n):
     f, g = [2], [1]
+    global p
     for i in range(2, n + 1):
-        f.append((-1)**i * (fact_iteration(i - 1) - g[0]))
+        p *= -1
+        f.append(p * (fact_iteration(i - 1) - g[0]))
         g.append(f[0] + g[0])
         f.pop(0)
         g.pop(0)
