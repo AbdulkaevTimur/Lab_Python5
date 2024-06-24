@@ -1,78 +1,82 @@
-#Задана рекуррентная функция. Область определения функции – натуральные числа.
-#Написать программу сравнительного вычисления данной функции рекурсивно и итерационно.
-#Определить границы применимости рекурсивного и итерационного подхода.
-#Вариант 1: F(1) = 2; G(1) = 1; F(n) = (-1)**n * ((n–1)! – G(n–1)), G(n) = F(n–1) + G(n–1), при n >=2
-import sys
-from functools import lru_cache
+'''
+Задана рекуррентная функция. Область определения функции – натуральные числа.
+Написать программу сравнительного вычисления данной функции рекурсивно и итерационно.
+Определить границы применимости рекурсивного и итерационного подхода.
+Вариант 1: F(1) = 2; G(1) = 1; F(n) = (-1)**n * ((n–1)! – G(n–1)), G(n) = F(n–1) + G(n–1), при n >=2
+'''
+
 import timeit
-sys.set_int_max_str_digits(1000000000)
-sys.setrecursionlimit(1000000000)
+import matplotlib.pyplot as plt
 
-G = 1
-F = 2
-n = 0
 
-#Рекурсия
-@lru_cache(maxsize=None)
-def fact_recursion(n):
+factorial = 1
+def dynamic_factorial(n):
+    global factorial
+    factorial = n * factorial
+    return factorial
+
+def recursive_factorial(n):
     if n == 1:
         return 1
     else:
-        return n * fact_recursion(n - 1)
+        return n * recursive_factorial(n-1)
 
-@lru_cache(maxsize=None)
-def f_recursion(n):
+
+def iterative_factorial(n):
+    result = 1
+    for i in range(2, n+1):
+        result *= i
+    return result
+
+G_value = 1
+F_value = 2
+
+# G
+def G(n):
+    global G_value, F_value
+    if n == 1:
+        return 1
+    else:
+        G_value = F(n-1) + G(n-1)
+        return G_value
+
+# F
+def F(n):
+    global G_value, F_value
     if n == 1:
         return 2
     else:
-        global p
-        p *= -1
-        return p * (fact_recursion(n - 1) - g_recursion(n - 1))
+        global k
+        k *= -1
+        F_value = k * (dynamic_factorial(n-1) - G(n-1))
+        return F_value
 
-@lru_cache(maxsize=None)
-def g_recursion(n):
-    if n == 1:
-        return 1
-    else:
-        return f_recursion(n - 1) + g_recursion(n - 1)
+# Время time.time
+def score_time(func, n):
+    return timeit.timeit(lambda: func(n), number=1000)
 
-@lru_cache(maxsize=None)
-def fact_iteration(n):
-    fact = 1
-    for i in range(1, n + 1):
-        fact *= i
-    return fact
+# Значения n для которых мы хотим измерить время выполнения
+n_values = range(2, 100)
+recursive_times = []
+iterative_times = []
+step = 1
 
-@lru_cache(maxsize=None)
-def f_g_iteration(n):
-    f, g = [2], [1]
-    global p
-    for i in range(2, n + 1):
-        p *= -1
-        f.append(p * (fact_iteration(i - 1) - g[0]))
-        g.append(f[0] + g[0])
-        f.pop(0)
-        g.pop(0)
-    return f[0], g[0]
 
-def clear():
-    fact_iteration.cache_clear()
-    fact_recursion.cache_clear()
-    fact_recursion.cache_clear()
-    f_recursion.cache_clear()
-    g_recursion.cache_clear()
-    f_g_iteration.cache_clear()
+for n in n_values:
+    recursive_times.append(score_time(recursive_factorial, n))
+    iterative_times.append(score_time(iterative_factorial, n))
 
-while n < 2:
-    n = int(input('Введите число n >= 2: '))
 
-F, G = f_g_iteration(n)
-print('ИТЕРАЦИОННЫЙ МЕТОД:\n' + 'F(' + str(n) + ') = ' + str(F) + '\nG(' + str(n) + ') = ' + str(G))
-print('РЕКУРСИВНЫЙ МЕТОД:\n' + 'F(' + str(n) + ') = ' + str(f_recursion(n)) + '\nG(' + str(n) + ') = ' + str(g_recursion(n)))
+# Вывод
+print(f"{'n':<10}{'Рекурсивное время (мс)':<25}{'Итерационное время (мс)':<25}")
+for i, n in enumerate(n_values):
+    print(f"{n:<10}{recursive_times[i]:<25}{iterative_times[i]:<25}")
 
-f_g_iteration_time = timeit.timeit(lambda: f_g_iteration(n), number=1000)
-f_recursion_time = timeit.timeit(lambda: f_recursion(n), number=1000)
-print(f"Время вычисления итерационным методом: {'{:.10f}'.format(f_g_iteration_time)} секунд")
-print(f"Время вычисления рекурсивным методом:  {'{:.10f}'.format(f_recursion_time)} секунд")
-
-clear()
+# График
+plt.plot(n_values, recursive_times, label='Рекурсивно')
+plt.plot(n_values, iterative_times, label='Итерационно')
+plt.xlabel('n')
+plt.ylabel('Время (в миллисекундах)')
+plt.legend()
+plt.title('Время вычисления функции F(n)')
+plt.show()
